@@ -1,0 +1,1 @@
+{"name":"Local: database","url":"f:\\voice-banking-system\\backend\\app\\db\\database.py","tests":[{"id":1763885153542,"input":"","output":""}],"interactive":false,"memoryLimit":1024,"timeLimit":3000,"srcPath":"f:\\voice-banking-system\\backend\\app\\db\\database.py","group":"local","local":true}
