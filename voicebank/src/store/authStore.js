@@ -1,6 +1,6 @@
-
+// FILE: src/store/authStore.js
 import { create } from 'zustand';
-import { api } from '../utils/api';
+import { api } from '../utils/mockApi';
 
 export const useAuthStore = create((set) => ({
   user: JSON.parse(localStorage.getItem('vb_user')) || null,
@@ -9,39 +9,45 @@ export const useAuthStore = create((set) => ({
   authMode: 'login',
   showBankModal: false,
 
+  // Actions
   openLogin: () => set({ showAuthModal: true, authMode: 'login' }),
   openSignup: () => set({ showAuthModal: true, authMode: 'signup' }),
   closeAuthModal: () => set({ showAuthModal: false }),
+  
   openBankSetup: () => set({ showBankModal: true }),
   closeBankSetup: () => set({ showBankModal: false }),
 
-  // REAL LOGIN - Connects to Backend
-  login: async (username, password) => {
+  login: async (email, password) => {
     try {
-      const response = await api.login(username, password);
-      const user = {
-        id: response.user_id,
-        name: response.name,
-        token: response.token,
-        username: username
-      };
-      localStorage.setItem('vb_user', JSON.stringify(user));
-      set({ user, isAuthenticated: true, showAuthModal: false });
-      return { success: true };
+        const data = await api.login(email, password); 
+        const user = { ...data, email }; 
+        
+        localStorage.setItem('vb_user', JSON.stringify(user));
+        set({ user, isAuthenticated: true, showAuthModal: false });
     } catch (error) {
-      return { success: false, error: error.message };
+        console.error("Login failed", error);
+        // Throw the error so the component can catch it and show the message
+        throw error; 
     }
   },
 
-  signup: (name, email, password) => {
-    const fakeUser = { name, email, id: 2, isNew: true, bankDetails: null };
-    localStorage.setItem('vb_user', JSON.stringify(fakeUser));
-    set({ 
-      user: fakeUser, 
-      isAuthenticated: true, 
-      showAuthModal: false,
-      showBankModal: true 
-    });
+  signup: async (name, email, password) => {
+    try {
+        const data = await api.signup({ name, email, password });
+        const user = { ...data, email, isNew: true };
+        
+        localStorage.setItem('vb_user', JSON.stringify(user));
+        
+        set({ 
+            user, 
+            isAuthenticated: true, 
+            showAuthModal: false,
+            showBankModal: true 
+        });
+    } catch (error) {
+        console.error("Signup failed", error);
+        throw error;
+    }
   },
 
   completeBankSetup: (details) => {

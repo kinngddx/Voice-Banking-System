@@ -1,62 +1,48 @@
 // FILE: src/utils/mockApi.js
+const API_URL = 'http://localhost:8000';
 
-const DELAY = 800;
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-// Seed Data
-const seedData = () => {
-  if (!localStorage.getItem('vb_transactions')) {
-    const txs = [
-      { id: 'tx1', type: 'debit', amount: 450, title: 'Starbucks Indiranagar', date: new Date().toISOString(), category: 'Food' },
-      { id: 'tx2', type: 'credit', amount: 25000, title: 'Salary Credit', date: new Date(Date.now() - 86400000).toISOString(), category: 'Salary' },
-      { id: 'tx3', type: 'debit', amount: 1200, title: 'Jio Fiber Bill', date: new Date(Date.now() - 172800000).toISOString(), category: 'Utilities' },
-    ];
-    localStorage.setItem('vb_transactions', JSON.stringify(txs));
-  }
-  if (!localStorage.getItem('vb_balance')) {
-    localStorage.setItem('vb_balance', '124500');
-  }
+// Helper for HTTP requests
+const request = async (endpoint, method = 'GET', body = null) => {
+  // For this specific request, we are keeping the Mock logic for transactions
+  // because we want to instantly see the update on the frontend without waiting for backend implementation
+  return null; 
 };
 
-// WE USE 'export const api' HERE.
-// THIS MEANS YOU MUST USE { api } WHEN IMPORTING.
 export const api = {
-  init: () => seedData(),
-
-  // GET /api/user/balance
-  getBalance: async () => {
-    await sleep(DELAY);
-    return parseInt(localStorage.getItem('vb_balance') || '0');
+  init: () => {
+    if (!localStorage.getItem('vb_transactions')) {
+        const txs = [
+          { id: 'tx1', type: 'debit', amount: 450, title: 'Starbucks', date: new Date().toISOString() },
+          { id: 'tx2', type: 'credit', amount: 25000, title: 'Salary', date: new Date(Date.now() - 86400000).toISOString() },
+        ];
+        localStorage.setItem('vb_transactions', JSON.stringify(txs));
+    }
   },
 
-  // GET /api/transactions
+  // GET Transactions (Mocked for immediate UI updates)
   getTransactions: async () => {
-    await sleep(DELAY);
     return JSON.parse(localStorage.getItem('vb_transactions') || '[]');
   },
 
-  // POST /api/transfer
-  transferMoney: async ({ to, amount }) => {
-    await sleep(DELAY + 500);
-    const currentBal = parseInt(localStorage.getItem('vb_balance') || '0');
-    
-    if (currentBal < amount) throw new Error("Insufficient Funds");
-
-    const newBal = currentBal - amount;
-    localStorage.setItem('vb_balance', newBal.toString());
-
+  // ✅ NEW: Add Transaction locally
+  addTransaction: async (txData) => {
     const newTx = {
-      id: `tx_${Date.now()}`,
-      type: 'debit',
-      amount: amount,
-      title: `Transfer to ${to}`,
-      date: new Date().toISOString(),
-      category: 'Transfer'
+        id: `tx_${Date.now()}`,
+        type: 'debit',
+        amount: txData.amount,
+        title: `Transfer to ${txData.recipient}`,
+        date: new Date().toISOString(),
+        category: 'Transfer'
     };
+    
+    const current = JSON.parse(localStorage.getItem('vb_transactions') || '[]');
+    localStorage.setItem('vb_transactions', JSON.stringify([newTx, ...current]));
+    return newTx;
+  },
 
-    const txs = JSON.parse(localStorage.getItem('vb_transactions') || '[]');
-    localStorage.setItem('vb_transactions', JSON.stringify([newTx, ...txs]));
-
-    return { status: 'success', transactionId: newTx.id, newBalance: newBal };
-  }
+  // Keeping auth mocked for smooth demo
+  login: async (email, password) => ({ user_id: 1, name: 'Ujjawal', token: 'demo' }),
+  signup: async (data) => ({ user_id: 1, name: data.name, token: 'demo' }),
+  
+  getBalance: async () => 124500,
 };

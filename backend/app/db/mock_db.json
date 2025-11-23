@@ -55,6 +55,12 @@
             "from": 1,
             "to": 2,
             "amount": 500.0
+        },
+        {
+            "type": "transfer",
+            "from": 2,
+            "to": 2,
+            "amount": 500.0
         }
     ],
     "pending_transfers": [
@@ -138,6 +144,13 @@
         {
             "transfer_id": 12,
             "sender_id": 1,
+            "recipient_id": 2,
+            "amount": 500.0,
+            "status": "completed"
+        },
+        {
+            "transfer_id": 13,
+            "sender_id": 2,
             "recipient_id": 2,
             "amount": 500.0,
             "status": "completed"
