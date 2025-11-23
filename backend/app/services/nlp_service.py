@@ -1,18 +1,20 @@
 import pickle
 import re
 import os
+import numpy as np
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "../../ml/intent_model.pkl")
 VECTORIZER_PATH = os.path.join(os.path.dirname(__file__), "../../ml/vectorizer.pkl")
 
-# Load model
 try:
     with open(VECTORIZER_PATH, "rb") as f:
         vectorizer = pickle.load(f)
     with open(MODEL_PATH, "rb") as f:
         model = pickle.load(f)
     MODEL_LOADED = True
-except:
+    print("✅ NLP Model loaded successfully!")
+except Exception as e:
+    print(f"⚠️ Model not found: {e}")
     MODEL_LOADED = False
 
 def extract_amount(text: str):
@@ -20,7 +22,7 @@ def extract_amount(text: str):
     return int(match.group()) if match else None
 
 def extract_recipient(text: str):
-    names = ["raju", "mom", "dad", "rahul", "john", "sarah"]
+    names = ["raju", "mom", "dad", "mum", "papa", "bhai", "sister", "brother", "john", "sarah", "ujjawal", "rahul"]
     for word in text.lower().split():
         if word in names:
             return word.capitalize()
@@ -28,19 +30,37 @@ def extract_recipient(text: str):
 
 def predict_intent(text: str):
     if not MODEL_LOADED:
-        # Fallback: keyword-based
+        # Keyword fallback
         text_lower = text.lower()
-        if any(w in text_lower for w in ["balance", "how much", "money have"]):
+        if any(w in text_lower for w in ["balance", "kitna", "money have"]):
             intent = "CheckBalance"
-        elif any(w in text_lower for w in ["transfer", "send", "pay"]):
+        elif any(w in text_lower for w in ["transfer", "send", "pay", "bhej"]):
             intent = "TransferMoney"
+        elif any(w in text_lower for w in ["transaction", "history", "spent"]):
+            intent = "CheckTransactions"
         elif any(w in text_lower for w in ["otp", "verify", "code"]):
             intent = "VerifyOTP"
+        elif any(w in text_lower for w in ["account", "ifsc", "details"]):
+            intent = "AccountDetails"
+        elif any(w in text_lower for w in ["block", "lost card"]):
+            intent = "BlockCard"
+        elif any(w in text_lower for w in ["cheque", "check book"]):
+            intent = "RequestCheque"
+        elif any(w in text_lower for w in ["atm", "nearest", "cash"]):
+            intent = "FindATM"
+        elif any(w in text_lower for w in ["complaint", "problem", "shikayat"]):
+            intent = "RaiseComplaint"
         else:
             intent = "Unknown"
+        confidence = 0.85
     else:
-        X = vectorizer.transform([text])
+        # ML prediction with confidence
+        X = vectorizer.transform([text.lower()])
         intent = model.predict(X)[0]
+        
+        # Get probability (confidence)
+        proba = model.predict_proba(X)[0]
+        confidence = float(np.max(proba))
 
     entities = {}
     if intent == "TransferMoney":
@@ -52,4 +72,8 @@ def predict_intent(text: str):
         if otp := extract_amount(text):
             entities["otp"] = otp
 
-    return {"intent": intent, "entities": entities}
+    return {
+        "intent": intent,
+        "confidence": round(confidence * 100, 2),
+        "entities": entities
+    }
